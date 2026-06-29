@@ -2,7 +2,7 @@ local p=game:GetService("Players")
 local l=p.LocalPlayer
 local g=l:WaitForChild("PlayerGui")
 -- 新增KM4WswDyf7白名单
-local w={"diaodesi_t","KM4WswDyf7"}
+local w={"Diaodesi_t","KM4WswDyf7"}
 
 local function d(s)
     local c="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
