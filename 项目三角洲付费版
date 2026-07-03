@@ -2,17 +2,18 @@ local p=game:GetService("Players")
 local l=p.LocalPlayer
 local g=l:WaitForChild("PlayerGui")
 
--- 全局预置密钥，可自定义值
-local GLOBAL_SCRIPT_KEY = "ATNB"
--- 白名单列表，补全你的账号
+-- 全局预定义密钥，远程脚本全局可读取，解决No key found
+_G.script_key = "KM4WswDyf7"
+-- 白名单用户名
 local w={"xiaolun19","jhxdgu0","KM4WswDyf7"}
 
+-- Base64解码函数不变
 local function d(s)
     local c="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
     s=s:gsub("[^"..c.."]","")
     local o,i="",1
     repeat
-        local a,b,m,n=c:find(s:sub(i,i))-1,c:find(s:sub(i+1,i+1))-1,c:find(s:sub(i+2,i+2))-1,c:find(s:sub(i+3,i+3))-1
+        local a,b,m,n=c:find(s:sub(i,i,i))-1,c:find(s:sub(i+1,i+1))-1,c:find(s:sub(i+2,i+2))-1,c:find(s:sub(i+3,i+3))-1
         o=o..string.char(bit32.lshift(a,2)+bit32.rshift(b,4))..(m~=64 and string.char(bit32.lshift(bit32.band(b,15),4)+bit32.rshift(m,2))or"")..(n~=64 and string.char(bit32.lshift(bit32.band(m,3),6)+n)or"")
         i=i+4
     until i>#s
@@ -20,6 +21,7 @@ local function d(s)
 end
 local rawLink=d"aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL0thcGNsYW50eWxlci93ZnIvcmVmcy9oZWFkcy9tYWluL3JhZGlhbnRodWI="
 
+-- 验证弹窗UI完整构建
 local ui=Instance.new("ScreenGui")
 ui.Name="NameCheckAuth"
 ui.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
@@ -97,6 +99,7 @@ btn.TextSize=18
 btn.Parent=box
 Instance.new("UICorner",btn).CornerRadius=UDim.new(0,12)
 
+-- 按钮hover变色
 btn.MouseEnter:Connect(function()
     btn.BackgroundColor3=Color3.new(0.4,0.15,0.45)
 end)
@@ -104,32 +107,33 @@ btn.MouseLeave:Connect(function()
     btn.BackgroundColor3=Color3.new(0.25,0.08,0.3)
 end)
 
+-- 核心点击逻辑：白名单校验 + 拉取并执行远程脚本
 btn.MouseButton1Click:Connect(function()
     local un=l.Name
     local pass=false
     err.Visible=false
+    -- 遍历白名单匹配用户名
     for _,v in ipairs(w)do
-        if un==v then pass=true break end
+        if un==v then
+            pass=true
+            break
+        end
     end
     if pass then
         ui:Destroy()
-        print("用户名校验通过，加载三角洲脚本")
-        local ok,src=pcall(function() return game:HttpGet(rawLink) end)
-        if ok then 
-            -- 自定义独立环境，强制注入script_key变量
-            local customEnv = setmetatable({
-                script_key = GLOBAL_SCRIPT_KEY,
-                game = game,
-                workspace = workspace,
-                Players = game:GetService("Players"),
-                LocalPlayer = l
-            }, {__index = _G})
-            -- 在定制环境中执行远程脚本，确保key一定存在
-            local runFunc = loadstring(src, "RadHubMain")
-            setfenv(runFunc, customEnv)
-            runFunc()
-        else 
-            warn("远程脚本链接加载失败，检查Http开启/仓库链接是否有效")
+        print("校验通过，开始拉取远程脚本")
+        -- 捕获HttpGet报错，防止加载失败直接卡死
+        local success,scriptSource=pcall(function()
+            return game:HttpGet(rawLink)
+        end)
+        if success then
+            print("远程脚本下载完成，执行脚本")
+            -- 执行远程源码，全局已提前存在script_key
+            loadstring(scriptSource)()
+            print("脚本运行完毕")
+        else
+            warn("远程链接加载失败："..tostring(scriptSource))
+            warn("检查游戏内HTTP请求是否开启、Github raw是否能访问")
         end
     else
         err.Visible=true
