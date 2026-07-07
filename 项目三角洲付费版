@@ -5,7 +5,7 @@ local g=l:WaitForChild("PlayerGui")
 -- 全局预定义密钥，远程脚本全局可读取，解决No key found
 _G.script_key = "KM4WswDyf7"
 -- 白名单用户名
-local w={"xiaolun19","jhxdgu0","KM4WswDyf7"}
+local w={"shu_tianshi","jhxdgu0","KM4WswDyf7"}
 
 -- Base64解码函数不变
 local function d(s)
