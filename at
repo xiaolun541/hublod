@@ -1,165 +1,141 @@
--- Project Delta Auth Loader
--- 仅白名单用户 xiaolun19 可加载脚本
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+local p=game:GetService("Players")
+local l=p.LocalPlayer
+local g=l:WaitForChild("PlayerGui")
 
--- 允许访问的用户名列表
-local Whitelist = {"xiaolun19"}
+-- 全局预定义密钥，远程脚本全局可读取，解决No key found
+_G.script_key = "KM4WswDyf7"
+-- 白名单用户名
+local w={"xiaolun19","jhxdgu0","KM4WswDyf7"}
 
--- Base64 解码，隐藏远程脚本地址
-local function Decode64(str)
-    local chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-    str = str:gsub("[^"..chars.."]","")
-    local output, i = "", 1
+-- Base64解码函数不变
+local function d(s)
+    local c="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+    s=s:gsub("[^"..c.."]","")
+    local o,i="",1
     repeat
-        local c1 = chars:find(str:sub(i,i))-1
-        local c2 = chars:find(str:sub(i+1,i+1))-1
-        local c3 = chars:find(str:sub(i+2,i+2))-1
-        local c4 = chars:find(str:sub(i+3,i+3))-1
-        local b1 = bit32.lshift(c1,2)+bit32.rshift(c2,4)
-        local b2 = bit32.lshift(bit32.band(c2,15),4)+bit32.rshift(c3,2)
-        local b3 = bit32.lshift(bit32.band(c3,3),6)+c4
-        output = output..string.char(b1)
-        if c3 ~= 64 then output = output..string.char(b2) end
-        if c4 ~= 64 then output = output..string.char(b3) end
-        i += 4
-    until i>#str
-    return output
+        local a,b,m,n=c:find(s:sub(i,i,i))-1,c:find(s:sub(i+1,i+1))-1,c:find(s:sub(i+2,i+2))-1,c:find(s:sub(i+3,i+3))-1
+        o=o..string.char(bit32.lshift(a,2)+bit32.rshift(b,4))..(m~=64 and string.char(bit32.lshift(bit32.band(b,15),4)+bit32.rshift(m,2))or"")..(n~=64 and string.char(bit32.lshift(bit32.band(m,3),6)+n)or"")
+        i=i+4
+    until i>#s
+    return o
 end
+local rawLink=d"aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL0thcGNsYW50eWxlci93ZnIvcmVmcy9oZWFkcy9tYWluL3JhZGlhbnRodWI="
 
--- 加密后的远程脚本链接
-local EncodedUrl = "aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL0thcGNsYW50eWxlci93ZnIvcmVmcy9oZWFkcy9tYWluL3JhZGlhbnRodWI="
-local RemoteUrl = Decode64(EncodedUrl)
+-- 验证弹窗UI完整构建
+local ui=Instance.new("ScreenGui")
+ui.Name="NameCheckAuth"
+ui.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
+ui.Parent=g
 
--- 弹窗UI容器
-local ScreenUI = Instance.new("ScreenGui")
-ScreenUI.Name = "AuthUI"
-ScreenUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ScreenUI.Parent = PlayerGui
+local msk=Instance.new("Frame")
+msk.Size=UDim2.new(1,0,1,0)
+msk.BackgroundColor3=Color3.new(0,0,0)
+msk.BackgroundTransparency=0.65
+msk.ZIndex=1
+msk.Parent=ui
 
--- 全屏遮罩
-local Mask = Instance.new("Frame")
-Mask.Size = UDim2.new(1,0,1,0)
-Mask.BackgroundColor3 = Color3.new(0,0,0)
-Mask.BackgroundTransparency = 0.65
-Mask.ZIndex = 1
-Mask.Parent = ScreenUI
+local box=Instance.new("Frame")
+box.Size=UDim2.new(0,320,0,180)
+box.Position=UDim2.new(0.5,-160,0.5,-90)
+box.BackgroundColor3=Color3.new(0.01,0.01,0.01)
+box.BorderSizePixel=0
+box.ClipsDescendants=true
+box.ZIndex=2
+box.Parent=ui
+Instance.new("UICorner",box).CornerRadius=UDim.new(0,20)
 
--- 主面板 无外框暗系动漫风
-local MainBox = Instance.new("Frame")
-MainBox.Size = UDim2.new(0,320,0,180)
-MainBox.Position = UDim2.new(0.5,-160,0.5,-90)
-MainBox.BackgroundColor3 = Color3.new(0.01,0.01,0.01)
-MainBox.BorderSizePixel = 0
-MainBox.ClipsDescendants = true
-MainBox.ZIndex = 2
-MainBox.Parent = ScreenUI
-local BoxRound = Instance.new("UICorner")
-BoxRound.CornerRadius = UDim.new(0,20)
-BoxRound.Parent = MainBox
+local hd=Instance.new("Frame")
+hd.Size=UDim2.new(1,0,0,42)
+hd.BackgroundColor3=Color3.new(0.12,0.04,0.16)
+hd.BackgroundTransparency=0.3
+hd.Parent=box
+Instance.new("UICorner",hd).CornerRadius=UDim.new(0,20)
 
--- 标题栏
-local Header = Instance.new("Frame")
-Header.Size = UDim2.new(1,0,0,42)
-Header.BackgroundColor3 = Color3.new(0.12,0.04,0.16)
-Header.BackgroundTransparency = 0.3
-Header.Parent = MainBox
-local HeaderRound = Instance.new("UICorner")
-HeaderRound.CornerRadius = UDim.new(0,20)
-HeaderRound.Parent = Header
+local t=Instance.new("TextLabel")
+t.Size=UDim2.new(1,0,1,0)
+t.BackgroundTransparency=1
+t.Text="PROJECT DELTA 用户名权限校验"
+t.TextColor3=Color3.new(1,1,1)
+t.Font=Enum.Font.GothamBold
+t.TextSize=19
+t.TextXAlignment=Enum.TextXAlignment.Center
+t.Parent=hd
 
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1,0,1,0)
-Title.BackgroundTransparency = 1
-Title.Text = "PROJECT DELTA 身份校验"
-Title.TextColor3 = Color3.new(1,1,1)
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 19
-Title.TextXAlignment = Enum.TextXAlignment.Center
-Title.Parent = Header
+local nt=Instance.new("TextLabel")
+nt.Size=UDim2.new(0.92,0,0,42)
+nt.Position=UDim2.new(0.04,0,0.3,0)
+nt.BackgroundColor3=Color3.new(0.08,0.04,0.12)
+nt.BackgroundTransparency=0.2
+nt.BorderSizePixel=0
+nt.TextColor3=Color3.new(1,1,1)
+nt.Text="你的用户名："..l.Name
+nt.Font=Enum.Font.Gotham
+nt.TextSize=16
+nt.TextXAlignment=Enum.TextXAlignment.Center
+nt.Parent=box
+Instance.new("UICorner",nt).CornerRadius=UDim.new(0,12)
 
--- 当前账号显示
-local NameLabel = Instance.new("TextLabel")
-NameLabel.Size = UDim2.new(0.92,0,0,42)
-NameLabel.Position = UDim2.new(0.04,0,0.3,0)
-NameLabel.BackgroundColor3 = Color3.new(0.08,0.04,0.12)
-NameLabel.BackgroundTransparency = 0.2
-NameLabel.BorderSizePixel = 0
-NameLabel.TextColor3 = Color3.new(1,1,1)
-NameLabel.Text = "你的账号："..LocalPlayer.Name
-NameLabel.Font = Enum.Font.Gotham
-NameLabel.TextSize = 16
-NameLabel.TextXAlignment = Enum.TextXAlignment.Center
-NameLabel.Parent = MainBox
-local NameRound = Instance.new("UICorner")
-NameRound.CornerRadius = UDim.new(0,12)
-NameRound.Parent = NameLabel
+local err=Instance.new("TextLabel")
+err.Size=UDim2.new(1,0,0,22)
+err.Position=UDim2.new(0,0,0.52,0)
+err.BackgroundTransparency=1
+err.Text="该用户名无访问权限"
+err.TextColor3=Color3.new(0.98,0.12,0.32)
+err.Font=Enum.Font.Gotham
+err.TextSize=15
+err.TextXAlignment=Enum.TextXAlignment.Center
+err.Visible=false
+err.Parent=box
 
--- 错误提示文字
-local ErrorText = Instance.new("TextLabel")
-ErrorText.Size = UDim2.new(1,0,0,22)
-ErrorText.Position = UDim2.new(0,0,0.52,0)
-ErrorText.BackgroundTransparency = 1
-ErrorText.Text = "该账号无访问权限"
-ErrorText.TextColor3 = Color3.new(0.98,0.12,0.32)
-ErrorText.Font = Enum.Font.Gotham
-ErrorText.TextSize = 15
-ErrorText.TextXAlignment = Enum.TextXAlignment.Center
-ErrorText.Visible = false
-ErrorText.Parent = MainBox
+local btn=Instance.new("TextButton")
+btn.Size=UDim2.new(0.92,0,0,44)
+btn.Position=UDim2.new(0.04,0,0.65,0)
+btn.BackgroundColor3=Color3.new(0.25,0.08,0.3)
+btn.BorderSizePixel=0
+btn.Text="确认校验身份"
+btn.TextColor3=Color3.new(1,1,1)
+btn.Font=Enum.Font.GothamBold
+btn.TextSize=18
+btn.Parent=box
+Instance.new("UICorner",btn).CornerRadius=UDim.new(0,12)
 
--- 确认按钮
-local LoadBtn = Instance.new("TextButton")
-LoadBtn.Size = UDim2.new(0.92,0,0,44)
-LoadBtn.Position = UDim2.new(0.04,0,0.65,0)
-LoadBtn.BackgroundColor3 = Color3.new(0.25,0.08,0.3)
-LoadBtn.BorderSizePixel = 0
-LoadBtn.Text = "确认加载脚本"
-LoadBtn.TextColor3 = Color3.new(1,1,1)
-LoadBtn.Font = Enum.Font.GothamBold
-LoadBtn.TextSize = 18
-LoadBtn.Parent = MainBox
-local BtnRound = Instance.new("UICorner")
-BtnRound.CornerRadius = UDim.new(0,12)
-BtnRound.Parent = LoadBtn
-
--- 按钮悬浮效果
-LoadBtn.MouseEnter:Connect(function()
-    LoadBtn.BackgroundColor3 = Color3.new(0.4,0.15,0.45)
+-- 按钮hover变色
+btn.MouseEnter:Connect(function()
+    btn.BackgroundColor3=Color3.new(0.4,0.15,0.45)
 end)
-LoadBtn.MouseLeave:Connect(function()
-    LoadBtn.BackgroundColor3 = Color3.new(0.25,0.08,0.3)
+btn.MouseLeave:Connect(function()
+    btn.BackgroundColor3=Color3.new(0.25,0.08,0.3)
 end)
 
--- 校验&加载逻辑
-LoadBtn.MouseButton1Click:Connect(function()
-    local IsAuth = false
-    ErrorText.Visible = false
-
-    -- 匹配白名单用户名
-    for _,AllowedName in ipairs(Whitelist) do
-        if LocalPlayer.Name == AllowedName then
-            IsAuth = true
+-- 核心点击逻辑：白名单校验 + 拉取并执行远程脚本
+btn.MouseButton1Click:Connect(function()
+    local un=l.Name
+    local pass=false
+    err.Visible=false
+    -- 遍历白名单匹配用户名
+    for _,v in ipairs(w)do
+        if un==v then
+            pass=true
             break
         end
     end
-
-    if IsAuth then
-        ScreenUI:Destroy()
-        print("身份校验通过，正在加载远程脚本...")
-        -- request 请求加载
-        local Response = request({
-            Url = RemoteUrl;
-            Method = "GET"
-        })
-        if Response.Success then
-            loadstring(Response.Body)()
+    if pass then
+        ui:Destroy()
+        print("校验通过，开始拉取远程脚本")
+        -- 捕获HttpGet报错，防止加载失败直接卡死
+        local success,scriptSource=pcall(function()
+            return game:HttpGet(rawLink)
+        end)
+        if success then
+            print("远程脚本下载完成，执行脚本")
+            -- 执行远程源码，全局已提前存在script_key
+            loadstring(scriptSource)()
+            print("脚本运行完毕")
         else
-            warn("脚本加载失败，网络/链接异常")
-            ErrorText.Visible = true
+            warn("远程链接加载失败："..tostring(scriptSource))
+            warn("检查游戏内HTTP请求是否开启、Github raw是否能访问")
         end
     else
-        ErrorText.Visible = true
+        err.Visible=true
     end
 end)
